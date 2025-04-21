@@ -14,12 +14,15 @@ use Models\ComputerTable as Computers;
 
 $collection = Computers::getList([
     'select' => [
-        '*',
+        'name',
+        'text',
+        'articul',
         'SHOP_NAME' => 'SHOP.NAME',
+        'SHOP_ADRESS' => 'SHOP.ADRESS.VALUE',
         'MANUFACTURE_NAME' => 'MANUFACTURE.NAME'
     ]
 ])->fetchAll();
-setlocale(LC_MONETARY, 'en_US');
+
 ?>
     <ol class="list-group list-group-numbered">
         <?php foreach ($collection as $key => $comp) : ?>
@@ -28,7 +31,9 @@ setlocale(LC_MONETARY, 'en_US');
                 <p><?= $comp['text'] ?></p>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Артикул</strong> - <?= $comp['articul'] ?></li>
-                    <li class="list-group-item"><strong>Производитель</strong> - <?= $comp['MANUFACTURE_NAME'] ?></li>
+                    <li class="list-group-item"><strong>Производитель</strong> - <?= $comp['MANUFACTURE_NAME'] ?>
+                    <p>адрес магазина: <?= $comp['SHOP_ADRESS'] ?></p>
+                    </li>
                     <li class="list-group-item"><strong>Магазин</strong> - <?= $comp['SHOP_NAME'] ?></li>
                     <li class="list-group-item"><strong>Цена</strong> - <?= $comp['price'] ?> руб.</li>
                 </ul>
