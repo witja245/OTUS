@@ -32,9 +32,10 @@ $collection = Computers::getList([
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Артикул</strong> - <?= $comp['articul'] ?></li>
                     <li class="list-group-item"><strong>Производитель</strong> - <?= $comp['MANUFACTURE_NAME'] ?>
-                    <p>адрес магазина: <?= $comp['SHOP_ADRESS'] ?></p>
                     </li>
-                    <li class="list-group-item"><strong>Магазин</strong> - <?= $comp['SHOP_NAME'] ?></li>
+                    <li class="list-group-item"><strong>Магазин</strong> - <?= $comp['SHOP_NAME'] ?>
+                        <p>адрес магазина: <?= $comp['SHOP_ADRESS'] ?></p>
+                    </li>
                     <li class="list-group-item"><strong>Цена</strong> - <?= $comp['price'] ?> руб.</li>
                 </ul>
             </li>
