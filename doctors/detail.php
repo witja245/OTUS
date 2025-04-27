@@ -5,30 +5,47 @@ $APPLICATION->setTitle("Врач " . $_GET['name']);
 
 use Bitrix\Main\UI\Extension;
 use Models\lists\DoctorsPropertyValuesTable as DoctorsTable;
+
 Extension::load('ui.bootstrap4');
-$codeName = $_GET['name']; // идентификатор доктора из инфоблока Доктора
+//$codeName = $_GET['name']; // идентификатор доктора из инфоблока Доктора
+//
+//
+//$docId = $_GET['id']; // идентификатор доктора из инфоблока Доктора
+//$doctors = \Bitrix\Iblock\Elements\ElementDoctorsTable::getList([ // получение списка процедур у врачей
+//    'select' => [
+//        'ID',
+//        'NAME',
+//        'LAST_NAME',
+//        'FIRST_NAME',
+//        'MIDDLE_NAME',
+//        'PROC_IDS_MULTI.ELEMENT.NAME',
+//        'PROC_IDS_MULTI.ELEMENT.DESCRIPTION' // PROC_IDS_MULTI - множественное поле Процедуры у элемента инфоблока Доктора
+//    ],
+//    'filter' => [
+//        'ID' => $docId,
+//        'ACTIVE' => 'Y',
+//    ],
+//])
+//    ->fetchCollection();
+$docId =  $_GET['id']; // идентификатор доктора из инфоблока Доктора
+$doctors = \Bitrix\Iblock\Elements\ElementDoctorsTable::getList([ // получение списка процедур у врачей
+    'select' => [
+        'ID',
+        'NAME',
+        'FIRST_NAME',
+        'MIDDLE_NAME',
+        'LAST_NAME',
+        'PROC_IDS_MULTI.ELEMENT.NAME',
+        'PROC_IDS_MULTI.ELEMENT.DESCRIPTION' // PROC_IDS_MULTI - множественное поле Процедуры у элемента инфоблока Доктора
+    ],
+    'filter' => [
+        'ID' => $docId,
+        'ACTIVE' => 'Y',
+    ],
+])
+    ->fetchCollection();
 
 
-$doctors = DoctorsTable::query()
-    ->setSelect([
-        '*',
-        'NAME' => 'ELEMENT.NAME',
-        'PROCEDURES_NAME' => 'PROCEDURES.ELEMENT.NAME',
-        'DESCRIPTION' => 'PROCEDURES.DESCRIPTION',
-    ])
-    ->setFilter([
-        'NAME' => $codeName,
-    ])
-    ->setOrder(['NAME' => 'desc'])
-    ->registerRuntimeField(
-        null,
-        new \Bitrix\Main\Entity\ReferenceField(
-            'PROCEDURES',
-            \Models\lists\ProceduresPropertyValuesTable::getEntity(),
-            ['=this.PROC_IDS' => 'ref.IBLOCK_ELEMENT_ID']
-        )
-    )
-    ->fetchAll();
 
 ?>
     <div class="container ">
@@ -40,13 +57,13 @@ $doctors = DoctorsTable::query()
         <?php foreach ($doctors as $doctor): ?>
             <div class="row">
                 <div class="col">
-                    <a href="/doctors/edit/?name=<?= $doctor['NAME'] ?>" class="btn btn-primary">Изменить данные
+                    <a href="/doctors/edit/?id=<?= $doctor->getId() ?>" class="btn btn-primary">Изменить данные
                         врача</a>
                 </div>
             </div>
             <div class="row mt-5">
                 <div class="col">
-                    <h3><?= $doctor['LAST_NAME'] ?> <?= $doctor['FIRST_NAME'] ?> <?= $doctor['MIDDLE_NAME'] ?></h3>
+                    <h3><?= $doctor->getLastName()->getValue() ?> <?= $doctor->getFirstName()->getValue() ?> <?= $doctor->getMiddleName()->getValue() ?></h3>
                 </div>
             </div>
             <div class="row ">
@@ -54,8 +71,9 @@ $doctors = DoctorsTable::query()
                     <ol class="list-unstyled">
                         <li><h5>Процедуры:</h5>
                             <ul>
-                                <li><?= $doctor['PROCEDURES_NAME'] ?></li>
-                                <li><?= $doctor['DESCRIPTION'] ?></li>
+                                <?php foreach ($doctor->getProcIdsMulti()->getAll() as $prItem) { ?>
+                                    <li><?= $prItem->getElement()->getName() ?></li>
+                                <?php } ?>
 
                             </ul>
                         </li>
