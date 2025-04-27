@@ -7,21 +7,23 @@ use Bitrix\Main\UI\Extension;
 
 use Models\lists\DoctorsPropertyValuesTable as DoctorsTable;
 use Models\lists\ProceduresPropertyValuesTable as ProceduresTable;
-Extension::load('ui.bootstrap4');
-$codeName = $_GET['name']; // идентификатор доктора из инфоблока Доктора
 
-if (!empty($_REQUEST['ID'])){
+Extension::load('ui.bootstrap4');
+$docId = $_GET['id']; // идентификатор доктора из инфоблока Доктора
+
+if (!empty($_REQUEST['ID'])) {
 
     $el = new \CIBlockElement;
     $PROP = array();
-    $PROP[66] = $_REQUEST['FIRST_NAME'];  // свойству с кодом 12 присваиваем значение "Белый"
+    $PROP[65] = $_REQUEST['FIRST_NAME'];  // свойству с кодом 12 присваиваем значение "Белый"
     $PROP[67] = $_REQUEST['LAST_NAME'];        // свойству с кодом 3 присваиваем значение 38
-    $PROP[68] = $_REQUEST['MIDDLE_NAME'];        // свойству с кодом 3 присваиваем значение 38
-    $PROP[64] = $_REQUEST['PROC_IDS'];        // свойству с кодом 3 присваиваем значение 38
-    $arLoadProductArray = Array(
+    $PROP[66] = $_REQUEST['MIDDLE_NAME'];        // свойству с кодом 3 присваиваем значение 38
+    $PROP[69] = $_REQUEST['PROC_IDS_MULTI'];        // свойству с кодом 3 присваиваем значение 38
+
+    $arLoadProductArray = array(
         "IBLOCK_SECTION" => false,          // элемент лежит в корне раздела
-        "PROPERTY_VALUES"=> $PROP,
-        "NAME"           =>  $_REQUEST['NAME'],
+        "PROPERTY_VALUES" => $PROP,
+        "NAME" => $_REQUEST['NAME'],
     );
     $PRODUCT_ID = intval($_REQUEST['ID']);  // изменяем элемент с кодом (ID) 2
     $result = $el->Update($PRODUCT_ID, $arLoadProductArray);
@@ -31,37 +33,25 @@ if (!empty($_REQUEST['ID'])){
 $doctors = DoctorsTable::query()
     ->setSelect([
         '*',
+        'PROC_IDS_MULTI',
         'ID' => 'ELEMENT.ID',
         'NAME' => 'ELEMENT.NAME',
-        'PROCEDURES_NAME' => 'PROCEDURES.ELEMENT.NAME',
-        'DESCRIPTION' => 'PROCEDURES.DESCRIPTION',
     ])
     ->setFilter([
-        'NAME' => $codeName,
+        'ID' => $docId,
     ])
     ->setOrder(['NAME' => 'desc'])
-    ->registerRuntimeField(
-        null,
-        new \Bitrix\Main\Entity\ReferenceField(
-            'PROCEDURES',
-            \Models\lists\ProceduresPropertyValuesTable::getEntity(),
-            ['=this.PROC_IDS' => 'ref.IBLOCK_ELEMENT_ID']
-        )
-    )
     ->fetchAll();
-
-$procedures = ProceduresTable::query()
-    ->setSelect([
-        '*',
-        'NAME' => 'ELEMENT.NAME',
-        'ID' => 'ELEMENT.ID',
-
-    ])
-    ->fetchAll();
+$procedures = array();
+$arFilter = ['IBLOCK_ID' => 19, 'ACTIVE' => 'Y'];
+$arSelect = ['NAME', 'ID'];
+$res = CIBlockElement::GetList([], $arFilter, false, [], $arSelect);
+while ($arFields = $res->fetch()) {
+    $procedures[] = $arFields;
+}
 
 
 ?>
-
 
 
 <div class="container">
@@ -85,31 +75,43 @@ $procedures = ProceduresTable::query()
     </div>
     <div class="row mt-4">
         <div class="col-md-6 offset-md-3">
-            <form class="row g-3 needs-validation" novalidate>
-                <input type="hidden" name="ID" value="<?=$doctors['0']['ID']?>">
+            <form class="row g-3 needs-validation" novalidate method="post">
+                <input type="hidden" name="ID" value="<?= $doctors['0']['ID'] ?>">
                 <div class="col-12">
-                    <input type="text" name="LAST_NAME" class="form-control" id="lastName" value="<?=$doctors['0']['LAST_NAME']?>" required>
+                    <input type="text" name="LAST_NAME" class="form-control" id="lastName" placeholder="Фамилия"
+                           value="<?= $doctors['0']['LAST_NAME'] ?>" required>
                     <div class="valid-feedback">
                         Все хорошо!
                     </div>
                 </div>
                 <div class="col-12">
-                    <input type="text" name="FIRST_NAME" class="form-control" id="firstName" value="<?=$doctors['0']['FIRST_NAME']?>" required>
+                    <input type="text" name="FIRST_NAME" class="form-control" id="firstName" placeholder="Имя"
+                           value="<?= $doctors['0']['FIRST_NAME'] ?>" required>
                     <div class="valid-feedback">
                         Все хорошо!
                     </div>
                 </div>
                 <div class="col-12">
-                    <input type="text" name="MIDDLE_NAME" class="form-control" id="middleName" value="<?=$doctors['0']['MIDDLE_NAME']?>" required>
+                    <input type="text" name="MIDDLE_NAME" class="form-control" id="middleName" placeholder="Отчество"
+                           value="<?= $doctors['0']['MIDDLE_NAME'] ?>" required>
                     <div class="valid-feedback">
                         Все хорошо!
                     </div>
                 </div>
                 <div class="col-12">
-                    <select class="form-select" name="PROC_IDS" multiple aria-label="пример множественного выбора">
+                    <select class="form-select" name="PROC_IDS_MULTI[]" multiple
+                            aria-label="пример множественного выбора">
                         <option selected>Откройте это меню выбора</option>
                         <?php foreach ($procedures as $procedure): ?>
-                            <option value="<?=$procedure['ID']?>" <?php if($doctors['0']['PROC_IDS'] == $procedure['ID']){ echo 'selected'; } ?>><?=$procedure['NAME']?></option>
+                            <?php
+                            array_unshift($doctors['0']['PROC_IDS_MULTI'], "");
+                            unset($doctors['0']['PROC_IDS_MULTI'][0]);
+                            $key = array_search($procedure['ID'], $doctors['0']['PROC_IDS_MULTI']);
+                            ?>
+                            <option value="<?= $procedure['ID'] ?>" <?php if ($key > 0) {
+                                echo 'selected';
+                            } ?>><?= $procedure['NAME'] ?></option>
+                            <?php ?>
                         <?php endforeach; ?>
 
                     </select>
